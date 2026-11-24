@@ -35,13 +35,15 @@ jobs:
           sed -i 's/Dots Game/نقطه‌بازی/g' android/app/src/main/res/values/strings.xml
           sed -i 's/<activity/<activity android:screenOrientation="portrait"/' android/app/src/main/AndroidManifest.xml
 
-      - name: Build debug APK
-        working-directory: android
+      - name: Apply app icon
+        continue-on-error: true
         run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dots-game-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if [ -f icon.png ]; then
+            pip install pillow
+            python3 - <<'PY'
+          import os
+          from PIL import Image, ImageDraw
+          src = Image.open('icon.png').convert('RGBA')
+          res = 'android/app/src/main/res'
+          dens = {'mdpi': (48, 108), 'hdpi': (72, 162), 'xhdpi': (96, 216), 'xxhdpi': (144, 324), 'xxxhdpi': (192, 432)}
+          def masked(img, shape):
