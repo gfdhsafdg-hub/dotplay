@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>بازی نقطه‌بازی حرفه‌ای</title>
+<style>
+:root{--bg-color:#1e1e24;--dot-color:#f1f1f1;--user-color:#3498db;--ai-color:#e74c3c;--board-bg:#2b2b36;--accent:#f1c40f}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--bg-color);color:white;display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.brand{text-align:center;font-size:1.1rem;font-family:'Courier New',Courier,monospace;letter-spacing:2px;color:var(--accent);padding:5px 0 0;font-weight:bold;text-shadow:0 0 10px rgba(241,196,15,.3)}
+.game-wrapper{padding:8px;display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
+.header{display:flex;justify-content:space-between;align-items:center;background:var(--board-bg);padding:5px 15px;border-radius:10px;margin-bottom:5px;box-shadow:0 2px 4px rgba(0,0,0,.3)}
+.score-box{display:flex;align-items:center;gap:8px;font-size:1rem;font-weight:bold}.score-user{color:var(--user-color)}.score-ai{color:var(--ai-color)}
+.control-panel{display:flex;align-items:center;justify-content:space-between;background:var(--board-bg);padding:5px 10px;border-radius:10px;margin-bottom:5px;gap:10px;position:relative}
+.dice-display{font-size:1.5rem;width:45px;height:45px;display:flex;justify-content:center;align-items:center;background:white;color:black;border-radius:10px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.2);flex-shrink:0}
+.rolling{animation:shake .5s infinite}@keyframes shake{0%{transform:rotate(0)}25%{transform:rotate(10deg)}50%{transform:rotate(-10deg)}75%{transform:rotate(10deg)}100%{transform:rotate(0)}}
+button{padding:8px 15px;font-size:.9rem;font-weight:bold;color:white;background:#2ecc71;border:0;border-radius:8px;cursor:pointer;box-shadow:0 3px 0 #27ae60;transition:all .1s;flex-shrink:0;z-index:10;font-family:inherit}
+button:active{box-shadow:0 0 0 #27ae60;transform:translateY(3px)}button:disabled{background:#7f8c8d;box-shadow:0 3px 0 #576366;cursor:not-allowed}
+.status-text{font-size:.85rem;color:#bdc3c7;text-align:center;flex-grow:1}
+.board-container{background:var(--board-bg);border-radius:10px;flex:1 1 auto;min-height:0;display:flex;justify-content:center;align-items:center;padding:5px;overflow:hidden;box-shadow:0 4px 8px rgba(0,0,0,.4);position:relative}
+svg{display:block;width:100%;height:100%}
+.dot{fill:var(--dot-color);pointer-events:none}
+.line-hitbox{stroke:transparent;stroke-width:40;cursor:pointer;pointer-events:stroke}
+@media(hover:hover){.line-hitbox:not(.taken):hover{stroke:rgba(255,255,255,.12)}}
+.line-hitbox.taken{pointer-events:none;stroke:transparent}
+.drawn-line{stroke-width:6;stroke-linecap:round;pointer-events:none;animation:drawLine .2s ease-out}
+.line-user{stroke:var(--user-color)}.line-ai{stroke:var(--ai-color)}
+@keyframes drawLine{from{stroke-dasharray:100;stroke-dashoffset:100}to{stroke-dasharray:100;stroke-dashoffset:0}}
+.box-fill{opacity:.4;pointer-events:none;transform-box:fill-box;transform-origin:center;animation:fillBox .3s ease-in}
+.box-user{fill:var(--user-color)}.box-ai{fill:var(--ai-color)}
+@keyframes fillBox{from{opacity:0;transform:scale(.8)}to{opacity:.4;transform:scale(1)}}
+.icon-text{font-size:35px;pointer-events:none;text-anchor:middle;dominant-baseline:central;fill:rgba(255,255,255,.8)}
+.modal-overlay{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.8);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);display:flex;justify-content:center;align-items:center;z-index:100;opacity:1;transition:opacity .3s}
+.modal-overlay.hidden{opacity:0;pointer-events:none}
+.modal-content{max-height:92vh;overflow-y:auto;background:var(--board-bg);padding:20px;border-radius:15px;width:90%;max-width:350px;box-shadow:0 10px 25px rgba(0,0,0,.5);text-align:center;border:1px solid rgba(255,255,255,.1)}
+.modal-title{font-size:1.2rem;margin-bottom:15px;color:var(--accent)}
+.setting-group{margin-bottom:15px;text-align:right}.setting-group label{display:block;margin-bottom:5px;font-size:.9rem;color:#bdc3c7}
+.options-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.options-grid.two{grid-template-columns:repeat(2,1fr)}.options-grid.four{grid-template-columns:repeat(4,1fr)}.options-grid.four .option-btn{font-size:.72rem;padding:8px 2px}
+.option-btn{background:#3a3a48;border:2px solid transparent;border-radius:8px;padding:8px 5px;font-size:.8rem;color:white;box-shadow:none;transition:all .2s}
+.option-btn:active{transform:scale(.95);box-shadow:none}.option-btn.selected{background:rgba(255,255,255,.12);border-color:var(--user-color);color:var(--user-color);font-weight:bold}
+.start-btn{width:100%;margin-top:10px;padding:12px;font-size:1rem;background:#2ecc71}
+.start-btn.secondary{background:#3498db;box-shadow:0 3px 0 #2980b9}
+.header-tools{display:flex;gap:6px}
+.icon-btn{padding:4px 9px;font-size:1rem;background:#3a3a48;box-shadow:none;border-radius:8px}
+.icon-btn:active{box-shadow:none;transform:scale(.92)}
+.stats{font-size:.8rem;color:#bdc3c7;margin-top:8px}
+.note{font-size:.75rem;color:#f39c12;margin:6px 0 0}
+.help-list{text-align:right;font-size:.88rem;line-height:1.9;color:#dfe6e9;padding:0 18px 0 0;margin:0 0 8px}
+.drawn-line.last{stroke-width:9;animation:drawLine .2s ease-out,pulse 1s ease-in-out .2s 3}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@media(max-height:520px){.brand{font-size:.9rem;padding-top:1px}.game-wrapper{padding:4px}.header{padding:3px 10px}.control-panel{padding:3px 7px}.dice-display{width:36px;height:36px}.modal-content{padding:12px}.setting-group{margin-bottom:8px}}
+</style>
+</head>
+<body>
+<div class="brand">hoosh_sakhteh</div>
+<div class="game-wrapper">
+  <div class="header">
+    <div class="score-box"><span id="name-user">شما:</span><span class="score-user" id="user-score">0</span></div>
+    <div class="header-tools">
+      <button class="icon-btn" id="sound-btn" onclick="toggleSound()" aria-label="صدا و لرزش">🔊</button>
+      <button class="icon-btn" onclick="openHelp()" aria-label="راهنما">❓</button>
+      <button class="icon-btn" onclick="openSettings()" aria-label="منو">☰</button>
+    </div>
+    <div class="score-box"><span id="name-ai">سیستم:</span><span class="score-ai" id="ai-score">0</span></div>
+  </div>
+  <div class="control-panel">
+    <div class="dice-display" id="dice-display">🎲</div>
+    <button id="action-btn" onclick="rollDice()">شروع</button>
+    <div class="status-text" id="status-text">در انتظار شروع...</div>
+  </div>
+  <div class="board-container"><svg id="game-board" role="img" aria-label="صفحه بازی نقطه‌بازی"></svg></div>
+</div>
+
+<div class="modal-overlay hidden" id="settings-modal">
+  <div class="modal-content">
+    <div class="modal-title">تنظیمات بازی</div>
+    <div class="setting-group">
+      <label>حالت بازی:</label>
+      <div class="options-grid two" id="mode-options">
+        <button class="option-btn" data-v="ai" onclick="selectOpt('mode','ai')">با سیستم</button>
+        <button class="option-btn" data-v="two" onclick="selectOpt('mode','two')">دو نفره</button>
+      </div>
+    </div>
+    <div class="setting-group">
+      <label>اندازه صفحه:</label>
+      <div class="options-grid" id="size-options">
+        <button class="option-btn" data-v="5x8" onclick="selectOpt('size','5x8')">۵ × ۸</button>
+        <button class="option-btn" data-v="5x10" onclick="selectOpt('size','5x10')">۵ × ۱۰</button>
+        <button class="option-btn" data-v="6x10" onclick="selectOpt('size','6x10')">۶ × ۱۰</button>
+      </div>
+    </div>
+    <div class="setting-group" id="diff-group">
+      <label>سطح هوش مصنوعی:</label>
+      <div class="options-grid" id="diff-options">
+        <button class="option-btn" data-v="medium" onclick="selectOpt('diff','medium')">متوسط</button>
+        <button class="option-btn" data-v="hard" onclick="selectOpt('diff','hard')">سخت</button>
+        <button class="option-btn" data-v="pro" onclick="selectOpt('diff','pro')">حرفه‌ای</button>
+      </div>
+    </div>
+    <div class="setting-group">
+      <label>تم رنگی:</label>
+      <div class="options-grid four" id="theme-options">
+        <button class="option-btn" data-v="classic" onclick="selectOpt('theme','classic')">کلاسیک</button>
+        <button class="option-btn" data-v="nature" onclick="selectOpt('theme','nature')">طبیعت</button>
+        <button class="option-btn" data-v="neon" onclick="selectOpt('theme','neon')">نئون</button>
+        <button class="option-btn" data-v="fire" onclick="selectOpt('theme','fire')">آتشین</button>
+      </div>
+    </div>
+    <div class="setting-group">
+      <label>نشان خانه‌ها:</label>
+      <div class="options-grid" id="mark-options">
+        <button class="option-btn" data-v="star" onclick="selectOpt('mark','star')">★ ●</button>
+        <button class="option-btn" data-v="heart" onclick="selectOpt('mark','heart')">♥ ♦</button>
+        <button class="option-btn" data-v="xo" onclick="selectOpt('mark','xo')">✕ ○</button>
+      </div>
+    </div>
+    <div class="stats" id="stats-line"></div>
+    <div class="note" id="pending-note" style="display:none">تغییر حالت، اندازه و سطح از «بازی جدید» اعمال می‌شود.</div>
+    <button class="start-btn secondary" id="continue-btn" onclick="resumeGame()" style="display:none">ادامهٔ بازی</button>
+    <button class="start-btn" onclick="startGame()">شروع بازی جدید</button>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="help-modal">
+  <div class="modal-content">
+    <div class="modal-title">راهنمای بازی</div>
+    <ul class="help-list">
+      <li>با کشیدن خط بین دو نقطهٔ کنار هم، چهار ضلع یک خانه را کامل کنید؛ هر خانه یک امتیاز دارد.</li>
+      <li>هر کس خانه‌ای ببندد، دوباره بازی می‌کند.</li>
+      <li>اول تاس می‌اندازید: عدد زوج یعنی شما شروع می‌کنید.</li>
+      <li>خانه‌ای را که سه ضلعش کشیده شده به حریف ندهید!</li>
+      <li>آخرین خط کشیده‌شده پررنگ‌تر و چشمک‌زن است.</li>
+      <li>در سطح «حرفه‌ای» گاهی سیستم عمداً دو خانهٔ آخر یک زنجیره را نمی‌گیرد تا کنترل بازی را نگه دارد. این باگ نیست، ترفند است.</li>
+      <li>در حالت «دو نفره» دو نفر نوبتی روی یک گوشی بازی می‌کنند.</li>
+    </ul>
+    <button class="start-btn" onclick="closeHelp()">متوجه شدم</button>
+  </div>
+</div>
+
+<script>
+let COLS=5, ROWS=10, SPACING=100, OFFSET=50, DIFFICULTY='hard', MODE='ai';
+const svg=document.getElementById('game-board'), NS='http://www.w3.org/2000/svg';
+let currentTurn=null,isGameActive=false,userScore=0,aiScore=0,drawnLines=new Set(),totalLinesDrawn=0,audioCtx=null,aiTimer=null;
+let rollTimer=null,rolling=false,gameStarted=false,gameOver=false,lastLineEl=null;
+const DIFF_NAMES={medium:'متوسط',hard:'سخت',pro:'حرفه‌ای'};
+const THEMES={classic:['#3498db','#e74c3c'],nature:['#2ecc71','#e67e22'],neon:['#00e5ff','#ff4fd8'],fire:['#f1c40f','#9b59b6']};
+const MARKS={star:['★','●'],heart:['♥','♦'],xo:['✕','○']};
+const GROUPS={mode:'mode-options',size:'size-options',diff:'diff-options',theme:'theme-options',mark:'mark-options'};
+let CFG={mode:'ai',size:'5x10',diff:'hard',theme:'classic',mark:'star',sound:true,seen:false};
+let STATS={win:0,loss:0,draw:0};
+const $=id=>document.getElementById(id);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const nm=p=>p==='user'?(MODE==='two'?'بازیکن ۱':'شما'):(MODE==='two'?'بازیکن ۲':'سیستم');
+const col=p=>p==='user'?'var(--user-color)':'var(--ai-color)';
+
+/* ---------- ذخیره و بازیابی ---------- */
+function loadData(){
+ try{Object.assign(CFG,JSON.parse(localStorage.getItem('dots_cfg')||'{}'));Object.assign(STATS,JSON.parse(localStorage.getItem('dots_stats')||'{}'))}catch(e){}
+ if(!['ai','two'].includes(CFG.mode))CFG.mode='ai';
+ if(!['5x8','5x10','6x10'].includes(CFG.size))CFG.size='5x10';
+ if(!DIFF_NAMES[CFG.diff])CFG.diff='hard';
+ if(!THEMES[CFG.theme])CFG.theme='classic';
+ if(!MARKS[CFG.mark])CFG.mark='star';
+ CFG.sound=CFG.sound!==false;CFG.seen=CFG.seen===true;
+ ['win','loss','draw'].forEach(k=>{if(!(STATS[k]>=0))STATS[k]=0});
+}
+function saveData(){try{localStorage.setItem('dots_cfg',JSON.stringify(CFG));localStorage.setItem('dots_stats',JSON.stringify(STATS))}catch(e){}}
+
+/* ---------- تنظیمات و صدا ---------- */
+function applyGameCfg(){const [c,r]=CFG.size.split('x').map(Number);COLS=c;ROWS=r;DIFFICULTY=CFG.diff;MODE=CFG.mode}
+function applyTheme(){const [u,a]=THEMES[CFG.theme];document.documentElement.style.setProperty('--user-color',u);document.documentElement.style.setProperty('--ai-color',a)}
+function updateMarks(){const m=MARKS[CFG.mark];document.querySelectorAll('.icon-text').forEach(t=>{t.textContent=t.getAttribute('data-player')==='user'?m[0]:m[1]})}
+function syncOptionUI(){
+ for(const k in GROUPS)document.querySelectorAll('#'+GROUPS[k]+' .option-btn').forEach(b=>b.classList.toggle('selected',b.getAttribute('data-v')===String(CFG[k])));
+ $('diff-group').style.display=CFG.mode==='two'?'none':'block';
+}
+function selectOpt(k,v){CFG[k]=v;saveData();syncOptionUI();if(k==='theme')applyTheme();if(k==='mark')updateMarks()}
+function refreshNames(){$('name-user').textContent=nm('user')+':';$('name-ai').textContent=nm('ai')+':'}
+function refreshSoundBtn(){$('sound-btn').textContent=CFG.sound?'🔊':'🔇'}
+function toggleSound(){CFG.sound=!CFG.sound;saveData();refreshSoundBtn();if(CFG.sound)initAudio()}
+function openHelp(){$('help-modal').classList.remove('hidden')}
+function closeHelp(){$('help-modal').classList.add('hidden');if(!CFG.seen){CFG.seen=true;saveData()}}
+function startGame(){initAudio();$('settings-modal').classList.add('hidden');resetGame()}
+function resumeGame(){
+ $('settings-modal').classList.add('hidden');
+ if(isGameActive&&MODE==='ai'&&currentTurn==='ai'){clearTimeout(aiTimer);aiTimer=setTimeout(aiTurn,500)}
+}
+function initAudio(){try{if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume()}catch(e){}}
+function playSound(type){
+ if(!CFG.sound||!audioCtx)return;
+ try{
+  const osc=audioCtx.createOscillator(),g=audioCtx.createGain();
+  osc.connect(g);g.connect(audioCtx.destination);const now=audioCtx.currentTime;
+  if(type==='draw'){osc.type='sine';osc.frequency.setValueAtTime(400,now);osc.frequency.exponentialRampToValueAtTime(200,now+.1);g.gain.setValueAtTime(.1,now);g.gain.exponentialRampToValueAtTime(.01,now+.1);osc.start(now);osc.stop(now+.1)}
+  else if(type==='score'){osc.type='triangle';osc.frequency.setValueAtTime(600,now);osc.frequency.exponentialRampToValueAtTime(900,now+.15);g.gain.setValueAtTime(.1,now);g.gain.exponentialRampToValueAtTime(.01,now+.2);osc.start(now);osc.stop(now+.2)}
+  else if(type==='win'){osc.type='square';[400,500,600,800].forEach((f,i)=>osc.frequency.setValueAtTime(f,now+i*.1));g.gain.setValueAtTime(.1,now);g.gain.linearRampToValueAtTime(0,now+.5);osc.start(now);osc.stop(now+.5)}
+ }catch(e){}
+}
+function vibrate(p){try{if(CFG.sound&&navigator.vibrate)navigator.vibrate(p)}catch(e){}}
+
+/* ---------- ساخت صفحه ---------- */
+function mk(tag,attrs){const el=document.createElementNS(NS,tag);for(const k in attrs)el.setAttribute(k,attrs[k]);return el}
+function buildBoard(){
+ svg.innerHTML='';
+ svg.setAttribute('viewBox',`0 0 ${OFFSET*2+COLS*SPACING} ${OFFSET*2+ROWS*SPACING}`);
+ const gBoxes=mk('g',{id:'boxes-layer'}),gLines=mk('g',{id:'lines-layer'}),gDots=mk('g',{id:'dots-layer'});
+ svg.append(gBoxes,gLines,gDots);
+ for(let r=0;r<=ROWS;r++)for(let c=0;c<=COLS;c++)gDots.appendChild(mk('circle',{cx:OFFSET+c*SPACING,cy:OFFSET+r*SPACING,r:7,class:'dot'}));
+ const addHit=(type,r,c,x2,y2)=>{
+  const id=`${type}-${r}-${c}`;
+  const hit=mk('line',{x1:OFFSET+c*SPACING,y1:OFFSET+r*SPACING,x2,y2,class:'line-hitbox',id});
+  hit.addEventListener('click',()=>handleUserClick(id,type,r,c));
+  gLines.appendChild(hit);
+ };
+ for(let r=0;r<=ROWS;r++)for(let c=0;c<COLS;c++)addHit('h',r,c,OFFSET+(c+1)*SPACING,OFFSET+r*SPACING);
+ for(let r=0;r<ROWS;r++)for(let c=0;c<=COLS;c++)addHit('v',r,c,OFFSET+c*SPACING,OFFSET+(r+1)*SPACING);
+}
+
+/* ---------- منطق پایه ---------- */
+function boxLineIds(r,c){return [`h-${r}-${c}`,`h-${r+1}-${c}`,`v-${r}-${c}`,`v-${r}-${c+1}`]}
+function boxesOfLine(l){
+ const b=l.type==='h'?[[l.r-1,l.c],[l.r,l.c]]:[[l.r,l.c-1],[l.r,l.c]];
+ return b.filter(([r,c])=>r>=0&&r<ROWS&&c>=0&&c<COLS);
+}
+function parseLine(id){const [t,r,c]=id.split('-');return {id,type:t,r:+r,c:+c}}
+function sides(set,r,c){return boxLineIds(r,c).filter(id=>set.has(id)).length}
+function closedCount(set){let n=0;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(sides(set,r,c)===4)n++;return n}
+function getAvailableLines(){
+ const a=[];
+ for(let r=0;r<=ROWS;r++)for(let c=0;c<COLS;c++){const id=`h-${r}-${c}`;if(!drawnLines.has(id))a.push({id,type:'h',r,c})}
+ for(let r=0;r<ROWS;r++)for(let c=0;c<=COLS;c++){const id=`v-${r}-${c}`;if(!drawnLines.has(id))a.push({id,type:'v',r,c})}
+ return a;
+}
+
+/* ---------- نمایش و ثبت حرکت ---------- */
+function handleUserClick(lineId,type,r,c){
+ if(!isGameActive||drawnLines.has(lineId))return;
+ const who=currentTurn;
+ if(who!=='user'&&!(who==='ai'&&MODE==='two'))return;
+ playSound('draw');vibrate(30);
+ drawLineVisual(lineId,who);
+ const closed=checkAndFillBoxes(type,r,c,who);
+ if(closed>0){updateStatus(MODE==='two'?`${nm(who)} یک خانه گرفت! دوباره بازی می‌کند.`:'شما یک خانه گرفتید! نوبت شماست.',col(who));checkGameOver()}
+ else{switchTurn(who==='user'?'ai':'user');checkGameOver()}
+}
+function drawLineVisual(lineId,player){
+ drawnLines.add(lineId);totalLinesDrawn++;
+ const hit=$(lineId);
+ const line=mk('line',{x1:hit.getAttribute('x1'),y1:hit.getAttribute('y1'),x2:hit.getAttribute('x2'),y2:hit.getAttribute('y2'),class:`drawn-line line-${player}`});
+ hit.classList.add('taken');
+ if(lastLineEl)lastLineEl.classList.remove('last');
+ line.classList.add('last');lastLineEl=line;
+ $('lines-layer').insertBefore(line,hit);
+}
+function checkAndFillBoxes(type,r,c,player){
+ let closed=0;
+ for(const [br,bc] of boxesOfLine({type,r,c})){
+  if(boxLineIds(br,bc).every(id=>drawnLines.has(id))&&!$(`box-${br}-${bc}`)){fillBoxVisual(br,bc,player);closed++}
+ }
+ return closed;
+}
+function fillBoxVisual(r,c,player){
+ playSound('score');if(player==='user'||MODE==='two')vibrate([50,50,50]);
+ const rect=mk('rect',{id:`box-${r}-${c}`,x:OFFSET+c*SPACING,y:OFFSET+r*SPACING,width:SPACING,height:SPACING,class:`box-fill box-${player}`});
+ const text=mk('text',{x:OFFSET+c*SPACING+SPACING/2,y:OFFSET+r*SPACING+SPACING/2,class:'icon-text'});
+ text.setAttribute('data-player',player);text.textContent=MARKS[CFG.mark][player==='user'?0:1];
+ const layer=$('boxes-layer');layer.appendChild(rect);layer.appendChild(text);
+ if(player==='user'){userScore++;$('user-score').textContent=userScore}else{aiScore++;$('ai-score').textContent=aiScore}
+}
+function switchTurn(next){
+ currentTurn=next;
+ if(MODE==='two'){updateStatus(`نوبت ${nm(next)}. یک خط بکشید.`,col(next));return}
+ if(next==='user')updateStatus('نوبت شماست. یک خط بکشید.','var(--user-color)');
+ else{updateStatus(`سیستم در حال فکر کردن است (${DIFF_NAMES[DIFFICULTY]})...`,'var(--ai-color)');clearTimeout(aiTimer);aiTimer=setTimeout(aiTurn,650)}
+}
+
+/* ---------- هوش مصنوعی ---------- */
+// نتیجهٔ کشیدن یک خط: چند خانه می‌بندد و آیا خانهٔ سه‌ضلعی برای حریف می‌سازد
+function evaluateMove(l){
+ const d=new Set(drawnLines);d.add(l.id);
+ let closes=0,danger=false;
+ for(const [r,c] of boxesOfLine(l)){const n=sides(d,r,c);if(n===4)closes++;else if(n===3)danger=true}
+ return {closes,danger};
+}
+// اگر این خط (اختیاری) کشیده شود، حریف با حریصانه‌گرفتن چند خانه می‌تواند بگیرد؟
+function sweepCount(extraId){
+ const d=new Set(drawnLines);if(extraId)d.add(extraId);
+ const before=closedCount(drawnLines);
+ let progress=true;
+ while(progress){
+  progress=false;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+   if(sides(d,r,c)===3){d.add(boxLineIds(r,c).find(id=>!d.has(id)));progress=true}
+  }
+ }
+ return closedCount(d)-before;
+}
+// حالت حرفه‌ای: دو خانهٔ آخر زنجیره را رها کن تا کنترل بازی را نگه داری (double-cross)
+function proDecline(scoring,safe){
+ if(safe.length)return null;
+ const total=sweepCount();
+ if(total!==2||ROWS*COLS-userScore-aiScore-total<4)return null;
+ const m=scoring.find(x=>x.closes===1);
+ if(!m)return null;
+ const d=new Set(drawnLines);d.add(m.line.id);
+ for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+  if(sides(d,r,c)===3){
+   const l=parseLine(boxLineIds(r,c).find(id=>!d.has(id)));
+   if(evaluateMove(l).closes===0)return l;
+  }
+ }
+ return null;
+}
+function chooseAiMove(){
+ const available=getAvailableLines();
+ if(!available.length)return null;
+ const ev=available.map(line=>({line,...evaluateMove(line)}));
+ const scoring=ev.filter(x=>x.closes>0);
+ const safe=ev.filter(x=>!x.danger&&x.closes===0);
+ if(scoring.length){
+  if(DIFFICULTY==='pro'){const d=proDecline(scoring,safe);if(d)return d}
+  return scoring.sort((a,b)=>b.closes-a.closes)[0].line;
+ }
+ if(DIFFICULTY==='medium')return pick(available);
+ if(safe.length)return pick(safe).line;
+ // هیچ حرکت امنی نیست: کمترین تعداد خانهٔ واگذارشده را انتخاب کن
+ const costed=ev.map(x=>({line:x.line,cost:sweepCount(x.line.id)}));
+ const min=Math.min(...costed.map(x=>x.cost));
+ return pick(costed.filter(x=>x.cost===min)).line;
+}
+function aiTurn(){
+ if(!isGameActive||currentTurn!=='ai')return;
+ const chosen=chooseAiMove();
+ if(!chosen){checkGameOver();return}
+ playSound('draw');
+ drawLineVisual(chosen.id,'ai');
+ const closed=checkAndFillBoxes(chosen.type,chosen.r,chosen.c,'ai');
+ if(closed>0){
+  updateStatus('سیستم امتیاز گرفت و دوباره بازی می‌کند.','var(--ai-color)');
+  checkGameOver();
+  if(isGameActive)aiTimer=setTimeout(aiTurn,450);
+ }else{switchTurn('user');checkGameOver()}
+}
+
+/* ---------- وضعیت، پایان و شروع مجدد ---------- */
+function updateStatus(text,color){const el=$('status-text');el.textContent=text;el.style.color=color}
+function checkGameOver(){
+ if(gameOver)return;
+ const maxLines=ROWS*(COLS+1)+(ROWS+1)*COLS;
+ if(totalLinesDrawn<maxLines)return;
+ gameOver=true;isGameActive=false;clearTimeout(aiTimer);
+ const btn=$('action-btn');
+ btn.style.display='block';btn.textContent='تنظیمات / بازی مجدد';btn.style.backgroundColor='#f39c12';btn.style.boxShadow='0 3px 0 #d68910';btn.disabled=false;btn.onclick=openSettings;
+ const two=MODE==='two',sc=`${Math.max(userScore,aiScore)} به ${Math.min(userScore,aiScore)}`;
+ if(userScore>aiScore){updateStatus(two?`بازی تمام شد! ${nm('user')} برنده شد (${sc}) 🎉`:`بازی تمام شد! شما برنده شدید (${sc}) 🎉`,'#2ecc71');playSound('win');if(!two)STATS.win++}
+ else if(aiScore>userScore){updateStatus(two?`بازی تمام شد! ${nm('ai')} برنده شد (${sc}) 🎉`:`بازی تمام شد! سیستم برنده شد (${sc}) 😢`,two?'#2ecc71':'#e74c3c');if(two)playSound('win');else STATS.loss++}
+ else{updateStatus(`بازی مساوی شد! (${userScore} به ${aiScore})`,'#f1c40f');if(!two)STATS.draw++}
+ saveData();
+}
+function openSettings(){
+ if(rolling)return;
+ clearTimeout(aiTimer);
+ const inGame=gameStarted&&!gameOver;
+ $('continue-btn').style.display=inGame?'block':'none';
+ $('pending-note').style.display=inGame?'block':'none';
+ $('stats-line').textContent=`آمار شما در برابر سیستم: ${STATS.win} برد · ${STATS.loss} باخت · ${STATS.draw} مساوی`;
+ syncOptionUI();
+ $('settings-modal').classList.remove('hidden');
+}
+function resetGame(){
+ clearTimeout(aiTimer);clearTimeout(rollTimer);rolling=false;$('dice-display').classList.remove('rolling');
+ applyGameCfg();gameStarted=true;gameOver=false;lastLineEl=null;refreshNames();
+ userScore=0;aiScore=0;drawnLines.clear();totalLinesDrawn=0;isGameActive=false;currentTurn=null;
+ $('user-score').textContent='0';$('ai-score').textContent='0';$('dice-display').textContent='🎲';
+ const btn=$('action-btn');
+ btn.textContent='شروع (تاس)';btn.style.backgroundColor='#2ecc71';btn.style.boxShadow='0 3px 0 #27ae60';btn.disabled=false;btn.style.display='block';btn.onclick=rollDice;
+ updateStatus('برای شروع تاس بریزید!','#bdc3c7');
+ buildBoard();
+}
+function rollDice(){
+ if(isGameActive)return;
+ const btn=$('action-btn'),dice=$('dice-display');
+ btn.disabled=true;rolling=true;dice.classList.add('rolling');updateStatus('در حال انداختن تاس...','white');initAudio();
+ rollTimer=setTimeout(()=>{
+  rolling=false;dice.classList.remove('rolling');
+  const result=Math.floor(Math.random()*6)+1;
+  dice.textContent=['⚀','⚁','⚂','⚃','⚄','⚅'][result-1];
+  isGameActive=true;btn.style.display='none';
+  switchTurn(result%2===0?'user':'ai');
+ },800);
+}
+function init(){
+ loadData();applyTheme();refreshSoundBtn();syncOptionUI();applyGameCfg();refreshNames();buildBoard();openSettings();
+ if(!CFG.seen)openHelp();
+}
+init();
+</script>
+</body>
+</html>
